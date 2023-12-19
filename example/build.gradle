@@ -10,5 +10,7 @@ ext {
 dependencies {
     implementation "org.apache.flink:flink-streaming-java:${flinkVersion}"
     implementation "org.apache.flink:flink-clients:${flinkVersion}"
+    implementation "org.apache.flink:flink-table-common:${flinkVersion}"
+    implementation "org.apache.flink:flink-table-runtime:${flinkVersion}"
     implementation "org.apache.hudi:hudi-flink${flinkBinaryVersion}-bundle:${hudiVersion}"
 }
