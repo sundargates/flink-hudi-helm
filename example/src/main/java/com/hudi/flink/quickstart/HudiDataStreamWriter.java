@@ -1,4 +1,4 @@
-package org.example;
+package com.hudi.flink.quickstart;
 
 import java.util.Arrays;
 import java.util.HashMap;

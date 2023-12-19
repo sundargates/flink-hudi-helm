@@ -1,11 +1,15 @@
 apply plugin: 'application'
 apply plugin: 'com.bmuschko.docker-java-application'
+// apply the shadow plugin
+apply plugin: 'com.github.johnrengelman.shadow'
 
 ext {
     flinkVersion = '1.17.0'
     flinkBinaryVersion = '1.17'
     hudiVersion = '0.14.0'
 }
+
+mainClassName = "com.hudi.flink.quickstart.HudiDataStreamWriter"
 
 dependencies {
     implementation "org.apache.flink:flink-streaming-java:${flinkVersion}"
@@ -14,3 +18,32 @@ dependencies {
     implementation "org.apache.flink:flink-table-runtime:${flinkVersion}"
     implementation "org.apache.hudi:hudi-flink${flinkBinaryVersion}-bundle:${hudiVersion}"
 }
+
+// create the shadowJar task
+jar.enabled = false
+shadowJar {
+    archiveClassifier.set('')
+}
+
+def installDir = file("${buildDir}/install")
+def ci = System.getenv('GITHUB_ACTIONS')
+def imageRepository = ci ? 'netflixoss' : 'localhost:5001/netflixoss'
+docker {
+    dockerSyncBuildContext {
+        from installDir
+    }
+
+    dockerCreateDockerfile {
+        // instructions to install all the necessary dependencies
+        instruction 'WORKDIR /opt/hudi/examples'
+        instruction 'COPY HudiExample.jar streaming/'
+    }
+
+    javaApplication {
+        baseImage = 'flink:1.17'
+        maintainer = 'Sundaram Ananthanarayanan "me@sundaram.io"'
+        mainClassName = 'com.hudi.flink.quickstart.HudiDataStreamWriter'
+        images = ["$imageRepository/hudi-flink:latest"]
+    }
+}
+dockerSyncBuildContext.dependsOn(installDist)
