@@ -25,6 +25,7 @@ dependencies {
 jar.enabled = false
 shadowJar {
     archiveClassifier.set('')
+    zip64 true
 }
 
 def installDir = file("${buildDir}/libs")
