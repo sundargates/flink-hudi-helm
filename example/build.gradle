@@ -25,9 +25,9 @@ shadowJar {
     archiveClassifier.set('')
 }
 
-def installDir = file("${buildDir}/install")
+def installDir = file("${buildDir}/libs")
 def ci = System.getenv('GITHUB_ACTIONS')
-def imageRepository = ci ? 'netflixoss' : 'localhost:5001/netflixoss'
+def imageRepository = ci ? 'hudi' : 'localhost:5001/hudi'
 docker {
     dockerSyncBuildContext {
         from installDir
@@ -36,7 +36,7 @@ docker {
     dockerCreateDockerfile {
         // instructions to install all the necessary dependencies
         instruction 'WORKDIR /opt/hudi/examples'
-        instruction 'COPY HudiExample.jar streaming/'
+        instruction 'COPY example.jar streaming/'
     }
 
     javaApplication {
@@ -46,4 +46,4 @@ docker {
         images = ["$imageRepository/hudi-flink:latest"]
     }
 }
-dockerSyncBuildContext.dependsOn(installDist)
+dockerSyncBuildContext.dependsOn(shadowJar)

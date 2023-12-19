@@ -49,13 +49,13 @@ public class HudiDataStreamWriter {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    if (args.length < 2) {
-      System.err.println("Usage: HudiDataStreamWriter <targetTable> <basePath>");
-      System.exit(1);
-    }
+//    if (args.length < 2) {
+//      System.err.println("Usage: HudiDataStreamWriter <targetTable> <basePath>");
+//      System.exit(1);
+//    }
 
-    String targetTable = args[0];
-    String basePath = args[1];
+    String targetTable = "hudi_table";
+    String basePath = "file:///tmp/hudi_table";
 
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
