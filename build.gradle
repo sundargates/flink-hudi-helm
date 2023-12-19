@@ -6,3 +6,23 @@ buildscript {
         classpath 'com.bmuschko:gradle-docker-plugin:6.7.0'
     }
 }
+
+subprojects {
+    apply plugin: 'java'
+
+    // Set the source and target compatbility to 1.8 to support Java 8
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testImplementation 'junit:junit:4.12'
+    }
+
+    test {
+        useJUnit()
+    }
+}
