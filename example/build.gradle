@@ -50,3 +50,19 @@ docker {
     }
 }
 dockerSyncBuildContext.dependsOn(shadowJar)
+
+// task to create a pod with the above image
+def podFile = file('pod.yml')
+task createPod(type: Exec) {
+    commandLine 'kubectl', 'create', '-f', podFile.toPath().toAbsolutePath().toString()
+}
+
+// task to delete the pod created with the above task
+task deletePod(type: Exec) {
+    commandLine 'kubectl', 'delete', '-f', podFile.toPath().toAbsolutePath().toString()
+}
+
+// set up port forwarding to the pod
+task openFlinkUI(type: Exec) {
+    commandLine 'kubectl', 'port-forward', 'svc/basic-example-rest', '8081'
+}
