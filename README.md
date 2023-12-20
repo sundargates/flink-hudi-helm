@@ -1,7 +1,7 @@
 # Quick Start
 
 ## Prerequisites
-Install the helm chart for Flink on Kubernetes. See [Flink on Kubernetes](https://ci.apache.org/projects/flink/flink-docs-release-1.12/deployment/resource-providers/standalone/kubernetes.html) for more details.
+Install the helm chart for Flink on Kubernetes. See [Flink on Kubernetes](https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-main/docs/try-flink-kubernetes-operator/quick-start/) for more details.
 
 ## Setting up a docker registry
 1. Point docker-cli to Docker running in minikube
