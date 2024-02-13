@@ -15,6 +15,14 @@ Install the helm chart for Flink on Kubernetes. See [Flink on Kubernetes](https:
    We tunnel port `5001` to `5000`, you can choose any available port.
 
 ## Building the Hudi Flink Docker Image
+
+We need to mount a local path on the host for all containers in minikube to work with.
+
+```shell
+mkdir /tmp/minikubedata
+minikube mount /tmp/minikubedata:/data
+```
+
 We need a custom docker image that extends the flink base image and adds the hudi flink example jar to it.
 You can build this docker image by running the following command:
 ```shell
