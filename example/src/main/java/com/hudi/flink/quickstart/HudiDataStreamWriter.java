@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
@@ -50,8 +53,7 @@ public class HudiDataStreamWriter {
    */
   public static void main(String[] args) throws Exception {
     String targetTable = "hudi_table";
-    String basePath = "file:///tmp/hudi_table";
-
+    String basePath = "s3a://<bucket>/flink_output/" + targetTable;
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
     // Enable checkpointing
