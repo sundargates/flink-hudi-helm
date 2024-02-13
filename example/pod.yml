@@ -8,10 +8,38 @@ spec:
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "2"
   serviceAccount: flink
+  podTemplate:
+    spec:
+      volumes:
+        - name: hostvolume
+          hostPath:
+            path: /tmp/minikubedata
+            type: DirectoryOrCreate
+      initContainers:
+        - name: prepare
+          image: busybox:1.28
+          command: ['sh', '-c', 'mkdir -p /data/hudi/ /data/flink/ && chown 9999 /data/hudi/ /data/flink/' ]
+          volumeMounts:
+            - mountPath: /data
+              name: hostvolume
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - mountPath: /data
+              name: hostvolume
   jobManager:
     resource:
       memory: "2048m"
       cpu: 1
+    podTemplate:
+      spec:
+        containers:
+          - name: flink-main-container
+            env:
+              - name: HUDI_BASE_PATH
+                value: 'file:///data/hudi/base_path'
+              - name: FLINK_CKPT_PATH
+                value: 'file:///data/flink/ckpt'
   taskManager:
     resource:
       memory: "2048m"
