@@ -17,8 +17,11 @@ dependencies {
     implementation "org.apache.flink:flink-table-common:${flinkVersion}"
     implementation "org.apache.flink:flink-table-runtime:${flinkVersion}"
     implementation "org.apache.hudi:hudi-flink${flinkBinaryVersion}-bundle:${hudiVersion}"
-    implementation 'org.apache.hadoop:hadoop-common:3.1.4'
-    implementation 'org.apache.hadoop:hadoop-hdfs:3.1.4'
+    implementation 'org.apache.hadoop:hadoop-common:2.10.1'
+    implementation 'org.apache.hadoop:hadoop-hdfs:2.10.1'
+    implementation 'org.apache.hadoop:hadoop-aws:2.10.1'
+    implementation 'com.amazonaws:aws-java-sdk-bundle:1.11.18'
+    implementation 'org.apache.flink:flink-s3-fs-hadoop:1.17.2' // Replace ${flinkVersion} with your Flink version
 }
 
 // create the shadowJar task
@@ -37,7 +40,6 @@ docker {
     }
 
     dockerCreateDockerfile {
-        // instructions to install all the necessary dependencies
         instruction 'WORKDIR /opt/hudi/examples'
         instruction 'COPY example.jar streaming/'
     }

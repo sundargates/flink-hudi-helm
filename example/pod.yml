@@ -3,6 +3,31 @@ kind: FlinkDeployment
 metadata:
   name: basic-example
 spec:
+  podTemplate:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: pod-template
+    spec:
+      containers:
+        - name: flink-main-container
+          env:
+            - name: ENABLE_BUILT_IN_PLUGINS
+              value: flink-s3-fs-presto-1.17.2.jar;flink-s3-fs-hadoop-1.17.2.jar
+            - name: AWS_ACCESS_KEY_ID
+              value: "<value>"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "<value>"
+            - name: AWS_SESSION_TOKEN
+              value: "<value>"
+          volumeMounts:
+            - mountPath: /flink-data
+              name: flink-volume
+      volumes:
+        - name: flink-volume
+          hostPath:
+            path: /tmp
+            type: Directory
   image: localhost:5001/hudi/hudi-flink:latest
   flinkVersion: v1_17
   flinkConfiguration:
