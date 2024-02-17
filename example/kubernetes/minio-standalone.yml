@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: minio
+  name: minio-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: minio
+    spec:
+      volumes:
+        - name: hostvolume
+          hostPath:
+            path: /tmp/minikubedata
+            type: DirectoryOrCreate
+      initContainers:
+        - name: prepare
+          image: busybox:1.28
+          command: ['sh', '-c', 'mkdir -p /data/minio/ && chown 9999 /data/minio/' ]
+          volumeMounts:
+            - mountPath: /data
+              name: hostvolume
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:RELEASE.2024-01-13T07-53-03Z
+          command:
+            - /bin/bash
+            - -c
+          args:
+            - minio server /data/minio --address :9000 --console-address :9090
+          volumeMounts:
+            - mountPath: /data
+              name: hostvolume
+status: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: minio
+  name: minio-svc
+spec:
+  ports:
+    - name: webconsole
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    - name: api
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+  selector:
+    app: minio
+status:
+  loadBalancer: {}

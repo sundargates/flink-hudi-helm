@@ -7,6 +7,7 @@ ext {
     flinkVersion = '1.17.0'
     flinkBinaryVersion = '1.17'
     hudiVersion = '0.14.0'
+    hadoopVersion = '3.1.4'
 }
 
 mainClassName = "com.hudi.flink.quickstart.HudiDataStreamWriter"
@@ -17,8 +18,10 @@ dependencies {
     implementation "org.apache.flink:flink-table-common:${flinkVersion}"
     implementation "org.apache.flink:flink-table-runtime:${flinkVersion}"
     implementation "org.apache.hudi:hudi-flink${flinkBinaryVersion}-bundle:${hudiVersion}"
-    implementation 'org.apache.hadoop:hadoop-common:3.1.4'
-    implementation 'org.apache.hadoop:hadoop-hdfs:3.1.4'
+    implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-hdfs:${hadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-aws:${hadoopVersion}"
 }
 
 // create the shadowJar task
@@ -28,18 +31,24 @@ shadowJar {
     zip64 true
 }
 
-def installDir = file("${buildDir}/libs")
 def ci = System.getenv('GITHUB_ACTIONS')
 def imageRepository = ci ? 'hudi' : 'localhost:5001/hudi'
 docker {
     dockerSyncBuildContext {
-        from installDir
+        from file("${buildDir}/libs"), file("$projectDir/hadoop")
     }
 
     dockerCreateDockerfile {
         // instructions to install all the necessary dependencies
+        instruction 'RUN mkdir -p /opt/flink/plugins/flink-s3-fs-hadoop/ && \\' +
+                    'mv -v /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/plugins/flink-s3-fs-hadoop/ && \\' +
+                    'chown -R flink:flink /opt/flink/plugins/flink-s3-fs-hadoop'
+        instruction 'ENV FLINK_HADOOP_CONF /etc/hadoop/conf'
+        instruction 'RUN mkdir -p $FLINK_HADOOP_CONF'
+        instruction "COPY core-site.xml \$FLINK_HADOOP_CONF/"
+        instruction 'ENV HADOOP_CLASSPATH=$FLINK_HADOOP_CONF'
         instruction 'WORKDIR /opt/hudi/examples'
-        instruction 'COPY example.jar streaming/'
+        instruction "COPY example.jar streaming/"
     }
 
     javaApplication {
@@ -51,18 +60,38 @@ docker {
 }
 dockerSyncBuildContext.dependsOn(shadowJar)
 
-// task to create a pod with the above image
-def podFile = file('pod.yml')
-task createPod(type: Exec) {
-    commandLine 'kubectl', 'create', '-f', podFile.toPath().toAbsolutePath().toString()
+def minioDeploymentFile = file('./kubernetes/minio-standalone.yml')
+def flinkDeploymentFile = file('./kubernetes/flink-operator.yml')
+
+task createMinioSvc(type: Exec) {
+    commandLine 'kubectl', 'create', '-f', minioDeploymentFile.toPath().toAbsolutePath().toString()
 }
 
-// task to delete the pod created with the above task
-task deletePod(type: Exec) {
-    commandLine 'kubectl', 'delete', '-f', podFile.toPath().toAbsolutePath().toString()
+task deleteMinioSvc(type: Exec) {
+    commandLine 'kubectl', 'delete', '-f', minioDeploymentFile.toPath().toAbsolutePath().toString()
+}
+
+task replaceMinioSvc(type: Exec) {
+    commandLine 'kubectl', 'replace', '--force', '-f', minioDeploymentFile.toPath().toAbsolutePath().toString()
+}
+
+task createFlinkApp(type: Exec) {
+    commandLine 'kubectl', 'create', '-f', flinkDeploymentFile.toPath().toAbsolutePath().toString()
+}
+
+task deleteFlinkApp(type: Exec) {
+    commandLine 'kubectl', 'delete', '-f', flinkDeploymentFile.toPath().toAbsolutePath().toString()
+}
+
+task replaceFlinkApp(type: Exec) {
+    commandLine 'kubectl', 'replace', '--force', '-f', flinkDeploymentFile.toPath().toAbsolutePath().toString()
 }
 
 // set up port forwarding to the pod
+task openMinioUI(type: Exec) {
+    commandLine 'kubectl', 'port-forward', 'svc/minio-svc', '9090'
+}
+
 task openFlinkUI(type: Exec) {
     commandLine 'kubectl', 'port-forward', 'svc/basic-example-rest', '8081'
 }

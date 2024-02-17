@@ -1,13 +1,5 @@
 package com.hudi.flink.quickstart;
 
-import java.io.File;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
@@ -25,10 +17,12 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.types.RowKind;
-import org.apache.flink.util.FileUtils;
 import org.apache.hudi.common.model.HoodieTableType;
 import org.apache.hudi.configuration.FlinkOptions;
 import org.apache.hudi.util.HoodiePipeline;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This Flink program serves as a demonstration of inserting, updating, and deleting records in a Hudi table using the DataStream API.
@@ -52,26 +46,17 @@ public class HudiDataStreamWriter {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    String targetTable = "hudi_table";
-
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-    String hudiBasePath = System.getenv("HUDI_BASE_PATH");
-    String flinkCkptPath = System.getenv("FLINK_CKPT_PATH");
-
-    // clean up for demo runs
-    FileUtils.deleteDirectory(new File(URI.create(hudiBasePath)));
-    FileUtils.deleteDirectory(new File(URI.create(flinkCkptPath)));
-
     // Enable checkpointing
-    configureCheckpointing(env, flinkCkptPath);
-
-    Map<String, String> options = createHudiOptions(hudiBasePath);
+    configureCheckpointing(env);
 
     DataStreamSource<RowData> dataStream = env.addSource(new SampleDataSource());
-    HoodiePipeline.Builder builder = createHudiPipeline(targetTable, options);
 
-    builder.sink(dataStream, false); // The second parameter indicates whether the input data stream is bounded
+    final String targetS3Path = System.getenv("TARGET_S3_PATH");
+    HoodiePipeline.Builder builder = createHudiPipeline("hudi_table", createHudiOptions(targetS3Path));
+    builder.sink(dataStream, false);
+
     env.execute("Api_Sink");
   }
 
@@ -80,13 +65,12 @@ public class HudiDataStreamWriter {
    *
    * @param env The Flink StreamExecutionEnvironment.
    */
-  private static void configureCheckpointing(StreamExecutionEnvironment env, String checkpointStorage) {
+  private static void configureCheckpointing(StreamExecutionEnvironment env) {
     env.enableCheckpointing(5000); // Checkpoint every 5 seconds
     CheckpointConfig checkpointConfig = env.getCheckpointConfig();
     checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
     checkpointConfig.setMinPauseBetweenCheckpoints(10000); // Minimum time between checkpoints
     checkpointConfig.setCheckpointTimeout(60000); // Checkpoint timeout in milliseconds
-    checkpointConfig.setCheckpointStorage(checkpointStorage);
   }
 
   /**
