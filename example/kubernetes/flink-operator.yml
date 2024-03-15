@@ -1,0 +1,41 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: basic-example
+spec:
+  image: localhost:5001/hudi/hudi-flink:latest
+  flinkVersion: v1_17
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "1"
+    execution.checkpointing.checkpoints-after-tasks-finish.enabled: "true"
+    state.backend.type: filesystem
+    state.savepoints.dir: s3a://test/savepoints/
+    state.checkpoints.dir: s3a://test/checkpoints/
+    s3.access-key: minioadmin
+    s3.secret-key: minioadmin
+    s3.endpoint: http://minio-svc:9000
+    s3.path.style.access: "true"
+    s3a.access-key: minioadmin
+    s3a.secret-key: minioadmin
+    s3a.endpoint: http://minio-svc:9000
+    s3a.path.style.access: "true"
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "1g"
+      cpu: 1
+    podTemplate:
+      spec:
+        containers:
+          - name: flink-main-container
+            env:
+              - name: TARGET_S3_PATH
+                value: 's3a://test/hudi'
+  taskManager:
+    resource:
+      memory: "1g"
+      cpu: 1
+  job:
+    jarURI: local:///opt/hudi/examples/streaming/example.jar
+    parallelism: 2
+    upgradeMode: stateless

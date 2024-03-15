@@ -1,11 +1,5 @@
 package com.hudi.flink.quickstart;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
@@ -26,6 +20,9 @@ import org.apache.flink.types.RowKind;
 import org.apache.hudi.common.model.HoodieTableType;
 import org.apache.hudi.configuration.FlinkOptions;
 import org.apache.hudi.util.HoodiePipeline;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This Flink program serves as a demonstration of inserting, updating, and deleting records in a Hudi table using the DataStream API.
@@ -49,20 +46,17 @@ public class HudiDataStreamWriter {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    String targetTable = "hudi_table";
-    String basePath = "file:///tmp/hudi_table";
-
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
     // Enable checkpointing
     configureCheckpointing(env);
 
-    Map<String, String> options = createHudiOptions(basePath);
-
     DataStreamSource<RowData> dataStream = env.addSource(new SampleDataSource());
-    HoodiePipeline.Builder builder = createHudiPipeline(targetTable, options);
 
-    builder.sink(dataStream, false); // The second parameter indicates whether the input data stream is bounded
+    final String targetS3Path = System.getenv("TARGET_S3_PATH");
+    HoodiePipeline.Builder builder = createHudiPipeline("hudi_table", createHudiOptions(targetS3Path));
+    builder.sink(dataStream, false);
+
     env.execute("Api_Sink");
   }
 
@@ -77,7 +71,6 @@ public class HudiDataStreamWriter {
     checkpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
     checkpointConfig.setMinPauseBetweenCheckpoints(10000); // Minimum time between checkpoints
     checkpointConfig.setCheckpointTimeout(60000); // Checkpoint timeout in milliseconds
-    checkpointConfig.setCheckpointStorage("file:///tmp/hudi_flink_checkpoint_2");
   }
 
   /**

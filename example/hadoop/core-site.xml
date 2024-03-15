@@ -1,0 +1,46 @@
+<configuration>
+
+    <property>
+        <name>fs.s3a.impl</name>
+        <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+    </property>
+
+    <!-- Comma separated list of local directories used to buffer
+         large results prior to transmitting them to S3. -->
+    <property>
+        <name>fs.s3a.buffer.dir</name>
+        <value>/tmp</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.endpoint</name>
+        <value>http://minio-svc:9000</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.path.style.access</name>
+        <value>true</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.access.key</name>
+        <description>AWS access key ID.
+            Omit for IAM role-based or provider-based authentication.</description>
+        <value>minioadmin</value>
+    </property>
+
+    <property>
+        <name>fs.s3a.secret.key</name>
+        <description>AWS secret key.
+            Omit for IAM role-based or provider-based authentication.</description>
+        <value>minioadmin</value>
+    </property>
+
+
+    <property>
+        <name>fs.s3a.aws.credentials.provider</name>
+        <value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value>
+    </property>
+
+
+</configuration>
